@@ -1,0 +1,50 @@
+name: check
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+  issues: write
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the sites
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -u
+          cat > sites.txt <<'LIST'
+          Sangam Gate server|https://sangamgateman.nikitchem.com/api/health|"ok":true
+          Hazri website|https://hazri.net/|Hazri
+          Sangam Gate website|https://sangamgate.in/|Sangam Gate
+          LIST
+          now="$(TZ=Asia/Kolkata date '+%d-%m-%Y %H:%M') IST"
+          while IFS='|' read -r name url expect; do
+            name="$(echo "$name" | sed 's/^ *//')"
+            [ -z "$name" ] && continue
+            ok=0; code="-"
+            for i in 1 2 3; do
+              code="$(curl -sS -m 20 -o body.txt -w '%{http_code}' "$url" 2>/dev/null || echo 000)"
+              if [ "$code" = "200" ] && grep -q "$expect" body.txt; then ok=1; break; fi
+              sleep 10
+            done
+            title="DOWN: $name"
+            num="$(gh issue list --state open --limit 50 --json number,title -q ".[] | select(.title==\"$title\") | .number" | head -1)"
+            if [ "$ok" = "1" ]; then
+              echo "OK   $name"
+              if [ -n "$num" ]; then gh issue comment "$num" --body "Back up at $now."; gh issue close "$num"; fi
+            else
+              echo "DOWN $name (HTTP $code)"
+              if [ -z "$num" ]; then gh issue create --title "$title" --body "Not answering since $now (HTTP $code after 3 tries). This issue closes itself when the site is back."; fi
+            fi
+          done < <(sed 's/^ *//' sites.txt)
+      - name: Keep the schedule alive
+        run: |
+          if [ "$(date -u +%d)" = "01" ] && [ "$(date -u +%H)" = "00" ]; then
+            git config user.name "status-check"; git config user.email "status-check@users.noreply.github.com"
+            git commit --allow-empty -m "keepalive $(date -u +%F)" && git push || true
+          fi
