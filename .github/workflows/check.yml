@@ -19,7 +19,7 @@ jobs:
           set -u
           cat > sites.txt <<'LIST'
           Sangam Gate server|https://sangamgateman.nikitchem.com/api/health|"ok":true
-          Sangam Gate database|https://sangamgateman.nikitchem.com/api/public/plans|
+          Sangam Gate database|https://sangamgateman.nikitchem.com/api/health?db=1|"db":true
           Hazri website|https://hazri.net/|Hazri
           Sangam Gate website|https://sangamgate.in/|Sangam Gate
           LIST
