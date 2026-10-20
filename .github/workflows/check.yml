@@ -22,7 +22,7 @@ jobs:
           Sangam Gate database|https://sangamgateman.nikitchem.com/api/health?db=1|"db":true
           Hazri website|https://hazri.net/|Hazri
           Sangam Gate website|https://sangamgate.in/|Sangam Gate
-          Daily Collection server|https://dailycollections.in/api/health|"ok":true
+          Daily Collection database|https://dailycollections.in/api/health?db=1|"db":true
           Daily Collection website|https://dailycollections.in/|Daily Collection
           LIST
           now="$(TZ=Asia/Kolkata date '+%d-%m-%Y %H:%M') IST"
